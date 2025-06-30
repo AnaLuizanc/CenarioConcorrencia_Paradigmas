@@ -38,8 +38,6 @@ Controle de Concorrência com Mutex
 Na versão corrigida, utilizamos a classe Mutex do Ruby para proteger as regiões críticas. Exemplo:
 
 ```ruby
-Copiar
-Editar
 fila_mutex.synchronize do
   break if fila_de_pedidos.empty?
   pedido = fila_de_pedidos.shift
