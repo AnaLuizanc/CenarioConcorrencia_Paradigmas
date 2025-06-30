@@ -1,0 +1,1 @@
+# CenarioConcorrencia_Paradigmas
