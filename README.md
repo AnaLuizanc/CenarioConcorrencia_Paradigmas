@@ -23,15 +23,12 @@ fila_de_pedidos.delete_at(0)
 
 Essas operações não são atômicas. Como múltiplas threads podem executar esse trecho ao mesmo tempo, observamos:
 
- Pedidos preparados mais de uma vez
+*  Pedidos preparados mais de uma vez
+*  Pedidos desaparecendo
+*  Lista de pedidos prontos incompleta
+*  Fila de pedidos não esvaziava ao final
 
- Pedidos desaparecendo
-
- Lista de pedidos prontos incompleta
-
- Fila de pedidos não esvaziava ao final
-
-Esses erros ocorreram porque o acesso às variáveis globais fila_de_pedidos e pedidos_prontos não era sincronizado.
+Esses erros ocorreram porque o acesso às variáveis globais **fila_de_pedidos** e **pedidos_prontos** não era sincronizado.
 
 ## Solução:
 Controle de Concorrência com Mutex
@@ -46,20 +43,49 @@ end
 
 Dessa forma, garantimos que apenas uma thread por vez possa acessar e modificar a fila de pedidos.
 
-Também protegemos a lista pedidos_prontos durante inserção, evitando sobrescritas e perda de dados.
+Também protegemos a lista **pedidos_prontos** durante inserção, evitando sobrescritas e perda de dados.
+
+### Explicação detalhada do uso do Mutex
+
+O `Mutex` (Mutual Exclusion) é um mecanismo de sincronização que garante que apenas uma thread execute um bloco de código crítico por vez. No contexto do código Ruby deste projeto, o Mutex é utilizado para proteger duas regiões críticas:
+
+1. **Retirada de pedidos da fila**:  
+   O acesso à fila de pedidos (`fila_de_pedidos`) é protegido por um Mutex. Isso impede que duas threads retirem o mesmo pedido simultaneamente ou que uma thread tente acessar a fila enquanto outra está modificando-a.  
+   O bloco protegido por `mutex.synchronize` garante que a verificação se a fila está vazia e a retirada do pedido (`shift`) ocorram de forma atômica, evitando condições de corrida.
+
+2. **Inserção de pedidos prontos**:  
+   A lista de pedidos prontos (`pedidos_prontos`) também é compartilhada entre as threads. Ao adicionar um pedido pronto, o Mutex garante que não haja sobrescrita ou perda de pedidos, mantendo a integridade dos dados.
+
+#### Como o problema de concorrência foi resolvido
+
+Sem o Mutex, múltiplas threads poderiam acessar e modificar as estruturas compartilhadas ao mesmo tempo, resultando em:
+- Pedidos processados mais de uma vez (duplicados)
+- Pedidos perdidos (não processados)
+- Fila de pedidos não esvaziada corretamente
+
+Com o uso do Mutex:
+- Apenas uma thread por vez pode acessar as regiões críticas.
+- Cada pedido é retirado e processado exatamente uma vez.
+- A lista de pedidos prontos contém todos os pedidos, sem duplicatas ou perdas.
+- A fila de pedidos fica vazia ao final do processamento.
+
+O Mutex, portanto, elimina as condições de corrida e garante a consistência dos dados em ambientes multithread.
 
 ## Como rodar o código para testes
 
-Este projeto possui dois arquivos Ruby independentes e não conectados:
+Este projeto possui dois arquivos Ruby e um de Python independentes e não conectados:
 
-Um arquivo que reproduz o problema de concorrência (com erros).
-
-Outro arquivo que contém a versão corrigida com controle de concorrência.
+1. Um arquivo Ruby que reproduz o problema de concorrência (com erros).
+2. Outro arquivo que contém a versão corrigida com controle de concorrência.
+3. E um arquivo Python que também simula o mesmo cenário com erros.
 
 Para testar o funcionamento da concorrência, siga:
-Abra o terminal no diretório do projeto.
-
-Execute cada arquivo separadamente, assim poderá observar o comportamento de cada um.
+1. Abra o terminal no diretório do projeto.
+2. Execute cada arquivo separadamente, assim poderá observar o comportamento de cada um.
+````
+ruby cozinha_com_concorrencia.rb
+ruby cozinha_com_tratamento_de_concorrencia.rb
+``````
 
 Durante a execução do _cozinha_com_concorrencia.rb_, você verá que alguns pedidos podem ser processados mais de uma vez ou desaparecer.
 
@@ -74,7 +100,7 @@ Rodar um após o outro não gera integração, apenas testes separados.
 
 Use as saídas para comparar e entender os efeitos da concorrência e sua correção.
 
-A versão do codígo com concorrencia também está disponivel em python.
+A versão do código com concorrência também está disponível em python.
 
 ## Conclusão
 Este exercício demonstrou na prática como race conditions podem surgir em ambientes concorrentes e como mecanismos como Mutex são essenciais para garantir segurança e consistência em programas multithread.
