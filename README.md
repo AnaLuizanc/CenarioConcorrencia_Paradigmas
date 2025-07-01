@@ -102,19 +102,5 @@ Use as saídas para comparar e entender os efeitos da concorrência e sua corre�
 
 A versão do código com concorrência também está disponível em python.
 
-## Dicas de Git
-
-Para cancelar um commit local (antes de fazer push), utilize:
-
-```
-git reset --soft HEAD~1
-```
-
-Se quiser descartar também as alterações feitas no commit:
-
-```
-git reset --hard HEAD~1
-```
-
 ## Conclusão
 Este exercício demonstrou na prática como race conditions podem surgir em ambientes concorrentes e como mecanismos como Mutex são essenciais para garantir segurança e consistência em programas multithread.
